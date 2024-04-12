@@ -1,21 +1,24 @@
 rect = cv2.minAreaRect(cnt)
 (x, y), (w, h), angle = rect
 
-pt1 = (x - w/2*np.cos(angle*np.pi/180) - h/2*np.sin(angle*np.pi/180),
-       y - w/2*np.sin(angle*np.pi/180) + h/2*np.cos(angle*np.pi/180))
-pt2 = (x + w/2*np.cos(angle*np.pi/180) - h/2*np.sin(angle*np.pi/180),
-       y + w/2*np.sin(angle*np.pi/180) + h/2*np.cos(angle*np.pi/180))
-
-if pt1[0] != pt2[0]:
-    k = (pt2[1] - pt1[1]) / (pt2[0] - pt1[0])
-    b = pt1[1] - k * pt1[0]
+if angle < -45:
+    angle += 90
 else:
-    k = np.inf
-    b = pt1[0]
+    angle -= 90
 
-x1 = int(pt1[0])
-y1 = int(pt1[1])
-x2 = int(pt2[0])
-y2 = int(pt2[1])
+rotation_matrix = cv2.getRotationMatrix2D((x, y), angle, 1.0)
+height, width = img.shape[:2]
+cos_angle = np.abs(rotation_matrix[0, 0])
+sin_angle = np.abs(rotation_matrix[0, 1])
+new_width = int(height * sin_angle + width * cos_angle)
+new_height = int(height * cos_angle + width * sin_angle)
+rotation_matrix[0, 2] += (new_width / 2) - x
+rotation_matrix[1, 2] += (new_height / 2) - y
+img = cv2.warpAffine(img, rotation_matrix, (new_width, new_height))
 
-cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+x1 = int(x + w/2)
+y1 = int(y - h/2)
+x2 = int(x + w/2)
+y2 = int(y + h/2)
+
+cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
